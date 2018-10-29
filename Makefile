@@ -23,7 +23,7 @@ STATICCHECK_IGNORE = \
 .PHONY: get_dep
 get_dep:
 	@echo ">> getting dependencies" 
-	$(GO) get -t ./...
+	GO111MODULE=$(GO111MODULE) $(GO) $(GOOPTS) get -t ./...
 
 .PHONY: test
 test: get_dep common-test
