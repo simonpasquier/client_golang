@@ -122,6 +122,7 @@ ifeq (,$(wildcard go.mod))
 	@echo ">> running check for unused packages"
 	@$(GOVENDOR) list +unused | grep . && exit 1 || echo 'No unused packages'
 else
+ifeq ($(shell $(GO) version | grep -E 'go1\.(10|[0-9])\.'),)
 	@echo ">> running check for unused/missing packages in go.mod"
 	GO111MODULE=$(GO111MODULE) $(GO) mod tidy
 	@git diff --exit-code -- go.sum go.mod
@@ -129,6 +130,7 @@ ifneq (,$(wildcard vendor))
 	@echo ">> running check for unused packages in vendor/"
 	GO111MODULE=$(GO111MODULE) $(GO) mod vendor
 	@git diff --exit-code -- go.sum go.mod vendor/
+endif
 endif
 endif
 
