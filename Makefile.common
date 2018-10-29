@@ -166,10 +166,10 @@ promu:
 
 .PHONY: $(STATICCHECK)
 $(STATICCHECK):
-ifneq (,$(wildcard go.mod))
-	# Get staticcheck from a temporary directory to avoid modifying the local go.{mod,sum}.
-	# See https://github.com/golang/go/issues/27643.
-	# For now, we are using the next branch of staticcheck because master isn't compatible yet with Go modules.
+ifdef GO111MODULE
+# Get staticcheck from a temporary directory to avoid modifying the local go.{mod,sum}.
+# See https://github.com/golang/go/issues/27643.
+# For now, we are using the next branch of staticcheck because master isn't compatible yet with Go modules.
 	tmpModule=$$(mktemp -d 2>&1) && \
 	mkdir -p $${tmpModule}/staticcheck && \
 	cd "$${tmpModule}"/staticcheck && \
@@ -177,8 +177,10 @@ ifneq (,$(wildcard go.mod))
 	GO111MODULE=on GOOS= GOARCH= $(GO) get -u honnef.co/go/tools/cmd/staticcheck@next && \
 	rm -rf $${tmpModule};
 else
-	GOOS= GOARCH= $(GO) get -u honnef.co/go/tools/cmd/staticcheck
+	GOOS= GOARCH= GO111MODULE=off $(GO) get -u honnef.co/go/tools/cmd/staticcheck
+endif
 
+ifdef GOVENDOR
 .PHONY: $(GOVENDOR)
 $(GOVENDOR):
 	GOOS= GOARCH= $(GO) get -u github.com/kardianos/govendor
