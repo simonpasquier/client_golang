@@ -11,5 +11,5 @@ go:
 go_import_path: github.com/prometheus/client_golang
 
 script:
-  - make check_license style unused test-short
   - if [[ ! $TRAVIS_GO_VERSION =~ ^1\.(7|8|9)\.[x0-9]+$ ]]; then make staticcheck; fi
+  - make check_license style unused test-short
