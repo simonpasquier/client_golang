@@ -117,7 +117,7 @@ common-staticcheck: $(STATICCHECK)
 ifndef GO111MODULE
 	$(STATICCHECK) -ignore "$(STATICCHECK_IGNORE)" $(pkgs)
 else
-	strace $(STATICCHECK) -ignore "$(STATICCHECK_IGNORE)" -checks "SA*" $(pkgs)
+	$(STATICCHECK) -ignore "$(STATICCHECK_IGNORE)" -checks "SA*" $(pkgs)
 endif
 
 .PHONY: common-unused
