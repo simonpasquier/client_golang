@@ -29,23 +29,27 @@ GO           ?= go
 GOFMT        ?= $(GO)fmt
 FIRST_GOPATH := $(firstword $(subst :, ,$(shell $(GO) env GOPATH)))
 GOOPTS       ?=
-ifneq (,$(wildcard go.mod))
+unexport GOVENDOR
 ifeq ($(shell $(GO) version | grep -E 'go1\.(10|[0-9])\.'),)
-ifneq (,$(wildcard vendor))
-	# Always use the local vendor/ directory to satisfy the dependencies.
-	GOOPTS      := $(GOOPTS) -mod=vendor
-endif
-	# Enable module support forcibly just in case the directory is inside GOPATH (and Travis CI).
-	GO111MODULE := on
+	ifneq (,$(wildcard go.mod))
+		# Enforce Go modules support just in case the directory is inside GOPATH (and for Travis CI).
+		GO111MODULE := on
 
-	unexport GOVENDOR
+		ifneq (,$(wildcard vendor))
+			# Always use the local vendor/ directory to satisfy the dependencies.
+			GOOPTS := $(GOOPTS) -mod=vendor
+		endif
+	endif
 else
+	ifneq (,$(wildcard go.mod))
+		ifneq (,$(wildcard vendor))
 $(warning This repository requires Go >= 1.11 because of Go modules)
 $(warning Some recipes may not work as expected as the current Go runtime is '$(shell $(GO) version)')
-endif
-else
-# This repository isn't using Go modules (yet).
-	GOVENDOR    := $(FIRST_GOPATH)/bin/govendor
+		endif
+	else
+		# This repository isn't using Go modules (yet).
+		GOVENDOR := $(FIRST_GOPATH)/bin/govendor
+	endif
 
 	unexport GO111MODULE
 endif
@@ -110,7 +114,7 @@ common-vet:
 .PHONY: common-staticcheck
 common-staticcheck: $(STATICCHECK)
 	@echo ">> running staticcheck"
-ifeq (,$(wildcard go.mod))
+ifndef GO111MODULE
 	$(STATICCHECK) -ignore "$(STATICCHECK_IGNORE)" $(pkgs)
 else
 	$(STATICCHECK) -ignore "$(STATICCHECK_IGNORE)" -checks "SA*" $(pkgs)
@@ -118,11 +122,11 @@ endif
 
 .PHONY: common-unused
 common-unused: $(GOVENDOR)
-ifeq (,$(wildcard go.mod))
+ifdef GOVENDOR
 	@echo ">> running check for unused packages"
 	@$(GOVENDOR) list +unused | grep . && exit 1 || echo 'No unused packages'
 else
-ifeq ($(shell $(GO) version | grep -E 'go1\.(10|[0-9])\.'),)
+ifdef GO111MODULE
 	@echo ">> running check for unused/missing packages in go.mod"
 	GO111MODULE=$(GO111MODULE) $(GO) mod tidy
 	@git diff --exit-code -- go.sum go.mod
